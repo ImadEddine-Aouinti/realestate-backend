@@ -7,11 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Transaction entity for sales/rentals.
  * Links user and property with financial details.
+ * Uses BigDecimal for montant to support precision/scale.
  */
 @Entity
 @Table(name = "transactions")
@@ -37,7 +39,7 @@ public class Transaction {
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be positive")
     @Column(nullable = false, precision = 10, scale = 2)
-    private Double montant;
+    private BigDecimal montant;  // Changed to BigDecimal for exact decimal handling
 
     @CreatedDate
     @Column(updatable = false)
@@ -59,5 +61,10 @@ public class Transaction {
         if (dateTransaction == null) {
             dateTransaction = LocalDateTime.now();
         }
+    }
+
+    // Helper for BigDecimal if needed
+    public double getMontantAsDouble() {
+        return montant != null ? montant.doubleValue() : 0.0;
     }
 }
