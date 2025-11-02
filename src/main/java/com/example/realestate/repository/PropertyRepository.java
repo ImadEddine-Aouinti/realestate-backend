@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSpecificationExecutor<Property> {
@@ -31,4 +32,12 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
 
     @Query("SELECT p FROM Property p WHERE p.status = 'AVAILABLE' ORDER BY p.createdAt DESC")
     List<Property> findAvailableProperties();
+
+    // NOUVELLE MÉTHODE - Charger une propriété avec owner et images
+    @Query("SELECT p FROM Property p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.images WHERE p.id = :id")
+    Optional<Property> findByIdWithOwnerAndImages(@Param("id") Long id);
+
+    // OPTIONNEL - Charger toutes les propriétés avec owner et images
+    @Query("SELECT p FROM Property p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.images")
+    List<Property> findAllWithOwnerAndImages();
 }

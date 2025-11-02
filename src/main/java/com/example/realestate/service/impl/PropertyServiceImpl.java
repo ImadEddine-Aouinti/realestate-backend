@@ -28,7 +28,8 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public PropertyResponse getPropertyById(Long id) {
-        Property property = propertyRepository.findById(id)
+        // Utilisez la nouvelle méthode qui charge owner et images
+        Property property = propertyRepository.findByIdWithOwnerAndImages(id)
                 .orElseThrow(() -> new RuntimeException("Property not found with id: " + id));
         return mapToPropertyResponse(property);
     }
@@ -65,6 +66,35 @@ public class PropertyServiceImpl implements PropertyService {
         response.setStatus(property.getStatus());
         response.setCreatedAt(property.getCreatedAt());
         response.setUpdatedAt(property.getUpdatedAt());
+
+        // MAPPER LES NOUVEAUX CHAMPS
+        response.setSurface(property.getSurface());
+        response.setBedrooms(property.getBedrooms());
+        response.setBathrooms(property.getBathrooms());
+        response.setRooms(property.getRooms());
+        response.setYearBuilt(property.getYearBuilt());
+        response.setAddress(property.getAddress());
+        response.setCity(property.getCity());
+        response.setPostalCode(property.getPostalCode());
+        response.setCountry(property.getCountry());
+        response.setHasParking(property.getHasParking());
+        response.setHasGarden(property.getHasGarden());
+        response.setHasPool(property.getHasPool());
+        response.setHasBalcony(property.getHasBalcony());
+        response.setHasElevator(property.getHasElevator());
+        response.setHasAirConditioning(property.getHasAirConditioning());
+        response.setHasHeating(property.getHasHeating());
+        response.setAdditionalFeatures(property.getAdditionalFeatures());
+
+        // Map owner - CORRIGÉ
+        if (property.getOwner() != null) {
+            PropertyResponse.UserResponse userResponse = new PropertyResponse.UserResponse();
+            userResponse.setId(property.getOwner().getId());
+            userResponse.setNom(property.getOwner().getNom()); // Utilisez getNom()
+            userResponse.setEmail(property.getOwner().getEmail());
+            userResponse.setTelephone(property.getOwner().getTelephone()); // Ajoutez le téléphone
+            response.setOwner(userResponse);
+        }
 
         // Map images
         if (property.getImages() != null) {

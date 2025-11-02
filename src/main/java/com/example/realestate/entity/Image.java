@@ -2,9 +2,6 @@ package com.example.realestate.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "images")
@@ -19,16 +16,15 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false)
     private String url;
 
-    @Column(name = "is_main", nullable = false)
-    private Boolean isMain;
+    @Column(name = "is_main")
+    private Boolean isMain = false;
+
+    private String altText;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
+    @JoinColumn(name = "property_id")
     private Property property;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
 }
