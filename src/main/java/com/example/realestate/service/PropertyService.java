@@ -15,5 +15,6 @@ public interface PropertyService {
                                                   BigDecimal minPrice, BigDecimal maxPrice);
     List<PropertyResponse> getAvailableProperties();
     List<PropertyResponse> getUserFavorites(Long userId);
-
+    PropertyResponse createProperty(Property property);
+    List<PropertyResponse> getPropertiesByCurrentUser(); // NOUVELLE MÉTHODE
 }

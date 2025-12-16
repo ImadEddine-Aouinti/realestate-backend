@@ -1,35 +1,43 @@
 package com.example.realestate.dto;
 
+// PropertyRequest.java
 import com.example.realestate.entity.Property;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class PropertyResponse {
-    private Long id;
+public class PropertyRequest {
+    @NotBlank
     private String title;
-    private String description;
-    private BigDecimal price;
-    private Property.PropertyType type;
-    private Property.PropertyStatus status;
-    private UserResponse owner;
-    private List<ImageResponse> images;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String mainImageUrl;
 
+    private String description;
+
+    @NotNull
+    private BigDecimal price;
+
+    @NotNull
+    private Property.PropertyType type;
+
+    @NotNull
+    private Property.PropertyStatus status;
+
+    @NotNull
     private Double surface;
+
     private Integer bedrooms;
     private Integer bathrooms;
     private Integer rooms;
     private Integer yearBuilt;
+
+    @NotBlank
     private String address;
     private String city;
     private String postalCode;
     private String country;
+
     private Boolean hasParking;
     private Boolean hasGarden;
     private Boolean hasPool;
@@ -37,21 +45,8 @@ public class PropertyResponse {
     private Boolean hasElevator;
     private Boolean hasAirConditioning;
     private Boolean hasHeating;
+
     private String additionalFeatures;
 
-    @Data
-    public static class ImageResponse {
-        private Long id;
-        private String url;
-        private String altText;
-        private Boolean isMain;
-    }
-
-    @Data
-    public static class UserResponse {
-        private Long id;
-        private String nom;
-        private String email;
-        private String telephone;
-    }
+    private List<ImageRequest> images;
 }
