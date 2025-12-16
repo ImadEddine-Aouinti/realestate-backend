@@ -16,5 +16,6 @@ public interface PropertyService {
     List<PropertyResponse> getAvailableProperties();
     List<PropertyResponse> getUserFavorites(Long userId);
     PropertyResponse createProperty(Property property);
-    List<PropertyResponse> getPropertiesByCurrentUser(); // NOUVELLE MÉTHODE
+    List<PropertyResponse> getPropertiesByCurrentUser();
+    List<PropertyResponse> getFavoriteProperties(Long userId); // NOUVELLE MÉTHODE
 }

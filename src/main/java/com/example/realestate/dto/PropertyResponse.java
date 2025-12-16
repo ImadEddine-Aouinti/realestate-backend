@@ -38,6 +38,7 @@ public class PropertyResponse {
     private Boolean hasAirConditioning;
     private Boolean hasHeating;
     private String additionalFeatures;
+    private Boolean isFavorite = false;
 
     @Data
     public static class ImageResponse {

@@ -44,6 +44,23 @@ public class PropertyController {
         }
     }
 
+    @GetMapping("/favorites")
+    public ResponseEntity<List<PropertyResponse>> getFavoriteProperties() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+
+            User currentUser = userRepository.findByEmail(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            List<PropertyResponse> favoriteProperties = propertyService.getFavoriteProperties(currentUser.getId());
+            return ResponseEntity.ok(favoriteProperties);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<List<PropertyResponse>> getPropertiesByFilters(
             @RequestParam(required = false) Property.PropertyType type,

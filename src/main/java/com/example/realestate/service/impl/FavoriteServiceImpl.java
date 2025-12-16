@@ -27,15 +27,14 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Override
     @Transactional
     public FavoriteResponse addFavorite(Long userId, Long propertyId) {
-        // Vérifier si déjà en favoris
         if (favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
-            throw new RuntimeException("Property already in favorites");
+            throw new RuntimeException("Cette propriété est déjà dans vos favoris");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new RuntimeException("Propriété non trouvée"));
 
         Favorite favorite = Favorite.builder()
                 .user(user)
@@ -49,12 +48,16 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Override
     @Transactional
     public void removeFavorite(Long userId, Long propertyId) {
+        if (!favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
+            throw new RuntimeException("Cette propriété n'est pas dans vos favoris");
+        }
         favoriteRepository.deleteByUserIdAndPropertyId(userId, propertyId);
     }
 
     @Override
     public List<FavoriteResponse> getUserFavorites(Long userId) {
-        return favoriteRepository.findByUserId(userId).stream()
+        List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+        return favorites.stream()
                 .map(this::mapToFavoriteResponse)
                 .collect(Collectors.toList());
     }
@@ -76,14 +79,40 @@ public class FavoriteServiceImpl implements FavoriteService {
         response.setUserId(favorite.getUser().getId());
         response.setAddedAt(favorite.getAddedAt());
 
-        // Map property details
+        // Récupérer la propriété avec toutes ses informations
+        Property property = favorite.getProperty();
         PropertyResponse propertyResponse = new PropertyResponse();
-        propertyResponse.setId(favorite.getProperty().getId());
-        propertyResponse.setTitle(favorite.getProperty().getTitle());
-        propertyResponse.setDescription(favorite.getProperty().getDescription());
-        propertyResponse.setPrice(favorite.getProperty().getPrice());
-        propertyResponse.setType(favorite.getProperty().getType());
-        propertyResponse.setStatus(favorite.getProperty().getStatus());
+
+        propertyResponse.setId(property.getId());
+        propertyResponse.setTitle(property.getTitle());
+        propertyResponse.setDescription(property.getDescription());
+        propertyResponse.setPrice(property.getPrice());
+        propertyResponse.setType(property.getType());
+        propertyResponse.setStatus(property.getStatus());
+        propertyResponse.setSurface(property.getSurface());
+        propertyResponse.setBedrooms(property.getBedrooms());
+        propertyResponse.setBathrooms(property.getBathrooms());
+        propertyResponse.setAddress(property.getAddress());
+        propertyResponse.setCity(property.getCity());
+        propertyResponse.setCountry(property.getCountry());
+
+        // Ajouter les images de la propriété
+        if (property.getImages() != null && !property.getImages().isEmpty()) {
+            List<PropertyResponse.ImageResponse> imageResponses = property.getImages().stream()
+                    .map(image -> {
+                        PropertyResponse.ImageResponse imageResponse = new PropertyResponse.ImageResponse();
+                        imageResponse.setId(image.getId());
+                        imageResponse.setUrl(image.getUrl());
+                        imageResponse.setAltText(image.getAltText());
+                        imageResponse.setIsMain(image.getIsMain());
+                        return imageResponse;
+                    })
+                    .collect(Collectors.toList());
+            propertyResponse.setImages(imageResponses);
+
+            // Ajouter l'URL de l'image principale
+            propertyResponse.setMainImageUrl(property.getMainImageUrl());
+        }
 
         response.setProperty(propertyResponse);
 

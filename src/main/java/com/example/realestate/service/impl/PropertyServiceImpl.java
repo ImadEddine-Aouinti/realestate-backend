@@ -5,6 +5,7 @@ import com.example.realestate.entity.Property;
 import com.example.realestate.entity.User;
 import com.example.realestate.repository.PropertyRepository;
 import com.example.realestate.repository.UserRepository;
+import com.example.realestate.service.FavoriteService;
 import com.example.realestate.service.PropertyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ public class PropertyServiceImpl implements PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final FavoriteService favoriteService ;
 
     @Override
     public List<PropertyResponse> getAllProperties() {
@@ -46,11 +48,26 @@ public class PropertyServiceImpl implements PropertyService {
                 .map(this::mapToPropertyResponse)
                 .collect(Collectors.toList());
     }
+
     @Override
     public PropertyResponse getPropertyById(Long id) {
         Property property = propertyRepository.findByIdWithOwnerAndImages(id)
                 .orElseThrow(() -> new RuntimeException("Property not found with id: " + id));
         return mapToPropertyResponse(property);
+    }
+
+    @Override
+    public List<PropertyResponse> getFavoriteProperties(Long userId) {
+        List<Long> favoriteIds = favoriteService.getUserFavoritePropertyIds(userId);
+
+        if (favoriteIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Property> properties = propertyRepository.findAllById(favoriteIds);
+        return properties.stream()
+                .map(this::mapToPropertyResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
