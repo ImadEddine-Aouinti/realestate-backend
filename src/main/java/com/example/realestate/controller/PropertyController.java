@@ -93,39 +93,43 @@ public class PropertyController {
             User currentUser = userRepository.findByEmail(currentUsername)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            Property property = new Property();
-            property.setTitle(propertyRequest.getTitle());
-            property.setDescription(propertyRequest.getDescription());
-            property.setPrice(propertyRequest.getPrice());
-            property.setType(propertyRequest.getType());
-            property.setStatus(propertyRequest.getStatus());
-            property.setOwner(currentUser);
-            property.setSurface(propertyRequest.getSurface());
-            property.setBedrooms(propertyRequest.getBedrooms());
-            property.setBathrooms(propertyRequest.getBathrooms());
-            property.setRooms(propertyRequest.getRooms());
-            property.setYearBuilt(propertyRequest.getYearBuilt());
-            property.setAddress(propertyRequest.getAddress());
-            property.setCity(propertyRequest.getCity());
-            property.setPostalCode(propertyRequest.getPostalCode());
-            property.setCountry(propertyRequest.getCountry());
-            property.setHasParking(propertyRequest.getHasParking());
-            property.setHasGarden(propertyRequest.getHasGarden());
-            property.setHasPool(propertyRequest.getHasPool());
-            property.setHasBalcony(propertyRequest.getHasBalcony());
-            property.setHasElevator(propertyRequest.getHasElevator());
-            property.setHasAirConditioning(propertyRequest.getHasAirConditioning());
-            property.setHasHeating(propertyRequest.getHasHeating());
-            property.setAdditionalFeatures(propertyRequest.getAdditionalFeatures());
+            Property property = Property.builder()
+                    .title(propertyRequest.getTitle())
+                    .description(propertyRequest.getDescription())
+                    .price(propertyRequest.getPrice())
+                    .type(propertyRequest.getType())
+                    .status(propertyRequest.getStatus())
+                    .owner(currentUser)
+                    .surface(propertyRequest.getSurface())
+                    .bedrooms(propertyRequest.getBedrooms())
+                    .bathrooms(propertyRequest.getBathrooms())
+                    .rooms(propertyRequest.getRooms())
+                    .yearBuilt(propertyRequest.getYearBuilt())
+                    .address(propertyRequest.getAddress())
+                    .city(propertyRequest.getCity())
+                    .postalCode(propertyRequest.getPostalCode())
+                    .country(propertyRequest.getCountry())
+                    .hasParking(propertyRequest.getHasParking())
+                    .hasGarden(propertyRequest.getHasGarden())
+                    .hasPool(propertyRequest.getHasPool())
+                    .hasBalcony(propertyRequest.getHasBalcony())
+                    .hasElevator(propertyRequest.getHasElevator())
+                    .hasAirConditioning(propertyRequest.getHasAirConditioning())
+                    .hasHeating(propertyRequest.getHasHeating())
+                    .additionalFeatures(propertyRequest.getAdditionalFeatures())
+                    .build();
 
+            // IMPORTANT: NE PAS créer d'images ici - elles seront uploadées séparément
+            // Les URLs d'images seront vides initialement
             if (propertyRequest.getImages() != null && !propertyRequest.getImages().isEmpty()) {
                 List<Image> images = new ArrayList<>();
                 for (ImageRequest imageRequest : propertyRequest.getImages()) {
-                    Image image = new Image();
-                    image.setUrl(imageRequest.getUrl());
-                    image.setAltText(imageRequest.getAltText());
-                    image.setIsMain(imageRequest.getIsMain());
-                    image.setProperty(property);
+                    Image image = Image.builder()
+                            .url("") // URL vide - sera remplie après upload
+                            .altText(imageRequest.getAltText())
+                            .isMain(imageRequest.getIsMain())
+                            .property(property)
+                            .build();
                     images.add(image);
                 }
                 property.setImages(images);
