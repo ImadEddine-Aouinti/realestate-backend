@@ -1,5 +1,7 @@
 package com.example.realestate.service.impl;
 
+import com.example.realestate.dto.NearbyPropertiesRequest;
+import com.example.realestate.dto.NearbyPropertyResponse;
 import com.example.realestate.dto.PropertyResponse;
 import com.example.realestate.entity.Property;
 import com.example.realestate.entity.User;
@@ -7,7 +9,13 @@ import com.example.realestate.repository.PropertyRepository;
 import com.example.realestate.repository.UserRepository;
 import com.example.realestate.service.FavoriteService;
 import com.example.realestate.service.PropertyService;
+import com.example.realestate.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Point;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -22,7 +30,7 @@ public class PropertyServiceImpl implements PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
-    private final FavoriteService favoriteService ;
+    private final FavoriteService favoriteService;
 
     @Override
     public List<PropertyResponse> getAllProperties() {
@@ -100,6 +108,84 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyResponse createProperty(Property property) {
         Property savedProperty = propertyRepository.save(property);
         return mapToPropertyResponse(savedProperty);
+    }
+
+    // NOUVELLES MÉTHODES POUR LA RECHERCHE SPATIALE
+
+    // Dans la méthode findNearbyProperties de PropertyServiceImpl
+    @Override
+    public Page<NearbyPropertyResponse> findNearbyProperties(NearbyPropertiesRequest request) {
+        // Créer le point géographique avec le bon SRID
+        Point point = GeometryUtil.createPoint(request.getLongitude(), request.getLatitude());
+
+        // Exécuter la requête
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        Page<Object[]> results = propertyRepository.findNearbyProperties(
+                point,
+                request.getRadius(),
+                pageable
+        );
+
+        // Convertir les résultats en DTO
+        List<NearbyPropertyResponse> properties = results.getContent().stream()
+                .map(this::convertToNearbyDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(properties, pageable, results.getTotalElements());
+    }
+
+    @Override
+    public Page<NearbyPropertyResponse> findNearbyPropertiesForUser(Long userId, Double radius) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        if (user.getLocation() == null) {
+            throw new RuntimeException("L'utilisateur n'a pas de localisation définie");
+        }
+
+        NearbyPropertiesRequest request = new NearbyPropertiesRequest();
+        request.setLatitude(user.getLocation().getY());
+        request.setLongitude(user.getLocation().getX());
+        request.setRadius(radius != null ? radius : 10.0); // Rayon par défaut 10km
+        request.setPage(0);
+        request.setSize(20);
+
+        return findNearbyProperties(request);
+    }
+
+    private NearbyPropertyResponse convertToNearbyDTO(Object[] result) {
+        Property property = (Property) result[0];
+        Double distance = (Double) result[1];
+
+        NearbyPropertyResponse dto = new NearbyPropertyResponse();
+        dto.setId(property.getId());
+        dto.setTitle(property.getTitle());
+        dto.setDescription(property.getDescription());
+        dto.setPrice(property.getPrice());
+        dto.setType(property.getType());
+        dto.setStatus(property.getStatus());
+        dto.setAddress(property.getAddress());
+        dto.setCity(property.getCity());
+        dto.setPostalCode(property.getPostalCode());
+        dto.setCountry(property.getCountry());
+        dto.setDistance(distance);
+        dto.setLatitude(property.getLatitude());
+        dto.setLongitude(property.getLongitude());
+        dto.setCreatedAt(property.getCreatedAt());
+
+        // Récupérer l'image principale
+        dto.setMainImageUrl(property.getMainImageUrl());
+
+        // Informations sur le propriétaire
+        if (property.getOwner() != null) {
+            NearbyPropertyResponse.UserResponse ownerResponse = new NearbyPropertyResponse.UserResponse();
+            ownerResponse.setId(property.getOwner().getId());
+            ownerResponse.setNom(property.getOwner().getNom());
+            ownerResponse.setEmail(property.getOwner().getEmail());
+            dto.setOwner(ownerResponse);
+        }
+
+        return dto;
     }
 
     private PropertyResponse mapToPropertyResponse(Property property) {

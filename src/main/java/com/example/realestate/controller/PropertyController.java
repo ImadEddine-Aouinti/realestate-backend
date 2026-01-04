@@ -1,6 +1,8 @@
 package com.example.realestate.controller;
 
 import com.example.realestate.dto.ImageRequest;
+import com.example.realestate.dto.NearbyPropertiesRequest;
+import com.example.realestate.dto.NearbyPropertyResponse;
 import com.example.realestate.dto.PropertyRequest;
 import com.example.realestate.dto.PropertyResponse;
 import com.example.realestate.entity.Image;
@@ -9,7 +11,10 @@ import com.example.realestate.entity.User;
 import com.example.realestate.repository.PropertyRepository;
 import com.example.realestate.repository.UserRepository;
 import com.example.realestate.service.PropertyService;
+import com.example.realestate.util.GeometryUtil;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Point; // NOUVEAU IMPORT
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -82,6 +87,57 @@ public class PropertyController {
     @GetMapping("/{id}")
     public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable Long id) {
         return ResponseEntity.ok(propertyService.getPropertyById(id));
+    }
+
+    // NOUVEAUX ENDPOINTS POUR LA RECHERCHE SPATIALE
+
+    @PostMapping("/nearby")
+    public ResponseEntity<Page<NearbyPropertyResponse>> getNearbyProperties(
+            @RequestBody NearbyPropertiesRequest request) {
+        return ResponseEntity.ok(propertyService.findNearbyProperties(request));
+    }
+
+    @GetMapping("/nearby/me")
+    public ResponseEntity<Page<NearbyPropertyResponse>> getNearbyPropertiesForUser(
+            @RequestParam(required = false) Double radius) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+
+            User currentUser = userRepository.findByEmail(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            Page<NearbyPropertyResponse> properties = propertyService.findNearbyPropertiesForUser(
+                    currentUser.getId(),
+                    radius
+            );
+            return ResponseEntity.ok(properties);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // Dans la méthode updateUserLocation du PropertyController
+    @PostMapping("/user/location")
+    public ResponseEntity<?> updateUserLocation(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+
+            User currentUser = userRepository.findByEmail(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            // Utiliser GeometryUtil pour créer le point avec le bon SRID
+            Point point = GeometryUtil.createPoint(longitude, latitude);
+            currentUser.setLocation(point);
+            userRepository.save(currentUser);
+
+            return ResponseEntity.ok("Localisation mise à jour avec succès");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur: " + e.getMessage());
+        }
     }
 
     @PostMapping

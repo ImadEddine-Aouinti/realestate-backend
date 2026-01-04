@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import org.locationtech.jts.geom.Point; // NOUVEAU IMPORT
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -57,6 +58,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Boolean enabled = true;
 
+    // NOUVEAUX CHAMPS POUR LA LOCALISATION
+    private String address;
+    private String city;
+    private String postalCode;
+    private String country;
+
+    @Column(columnDefinition = "POINT SRID 4326")
+    private Point location; // NOUVEAU : Coordonnées géographiques
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -93,5 +103,14 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    // NOUVELLES MÉTHODES UTILITAIRES
+    public Double getLatitude() {
+        return location != null ? location.getY() : null;
+    }
+
+    public Double getLongitude() {
+        return location != null ? location.getX() : null;
     }
 }

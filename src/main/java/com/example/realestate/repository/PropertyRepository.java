@@ -3,6 +3,9 @@ package com.example.realestate.repository;
 import com.example.realestate.entity.Property;
 import com.example.realestate.entity.Property.PropertyStatus;
 import com.example.realestate.entity.Property.PropertyType;
+import org.locationtech.jts.geom.Point; // NOUVEAU IMPORT
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -38,4 +41,26 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
 
     @Query("SELECT p FROM Property p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.images")
     List<Property> findAllWithOwnerAndImages();
+
+    // NOUVELLES MÉTHODES POUR LA RECHERCHE SPATIALE
+
+    @Query(value = "SELECT p.*, " +
+            "ST_Distance_Sphere(p.location, :point) / 1000 as distance " +
+            "FROM properties p " +
+            "WHERE ST_Distance_Sphere(p.location, :point) / 1000 <= :radius " +
+            "AND p.status = 'AVAILABLE' " +
+            "ORDER BY distance ASC",
+            countQuery = "SELECT count(*) FROM properties p " +
+                    "WHERE ST_Distance_Sphere(p.location, :point) / 1000 <= :radius " +
+                    "AND p.status = 'AVAILABLE'",
+            nativeQuery = true)
+    Page<Object[]> findNearbyProperties(@Param("point") Point point,
+                                        @Param("radius") Double radius,
+                                        Pageable pageable);
+
+    // Méthode pour créer un point géographique
+    @Query(value = "SELECT ST_PointFromText(CONCAT('POINT(', :longitude, ' ', :latitude, ')'), 4326)",
+            nativeQuery = true)
+    Point createPoint(@Param("longitude") Double longitude,
+                      @Param("latitude") Double latitude);
 }

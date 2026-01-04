@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.locationtech.jts.geom.Point; // NOUVEAU IMPORT
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -60,6 +61,10 @@ public class Property {
     private String postalCode; // Code postal
 
     private String country; // Pays
+
+    // NOUVEAU : Champ de localisation géographique
+    @Column(columnDefinition = "POINT SRID 4326")
+    private Point location; // Coordonnées géographiques
 
     // Caractéristiques supplémentaires
     private Boolean hasParking;
@@ -134,5 +139,14 @@ public class Property {
                 .findFirst()
                 .map(Image::getUrl)
                 .orElse(this.images.isEmpty() ? null : this.images.get(0).getUrl());
+    }
+
+    // NOUVELLES MÉTHODES UTILITAIRES
+    public Double getLatitude() {
+        return location != null ? location.getY() : null;
+    }
+
+    public Double getLongitude() {
+        return location != null ? location.getX() : null;
     }
 }
